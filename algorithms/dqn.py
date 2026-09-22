@@ -123,7 +123,14 @@ class ReplayBuffer:
 
         """
         # ==================== YOUR CODE HERE (Part 1a) ====================
-        raise NotImplementedError("Implement ReplayBuffer.add")
+        self.observations[self.pos] = obs
+        self.next_observations[self.pos] = next_obs
+        self.actions[self.pos] = action
+        self.rewards[self.pos] = reward
+        self.dones[self.pos] = done
+        # Circular write head: once full, the next write lands on the oldest slot.
+        self.pos = (self.pos + 1) % self.capacity
+        self.size = min(self.size + 1, self.capacity)
         # ==================================================================
 
     def sample(self, batch_size: int) -> Batch:
@@ -135,7 +142,15 @@ class ReplayBuffer:
 
         """
         # ==================== YOUR CODE HERE (Part 1b) ====================
-        raise NotImplementedError("Implement ReplayBuffer.sample")
+        # Draw from [0, size), never [0, capacity): empty slots are not transitions.
+        indices = np.random.randint(0, self.size, size=batch_size)
+        return Batch(
+            observations=torch.as_tensor(self.observations[indices], device=self.device),
+            actions=torch.as_tensor(self.actions[indices], device=self.device),
+            next_observations=torch.as_tensor(self.next_observations[indices], device=self.device),
+            rewards=torch.as_tensor(self.rewards[indices], device=self.device),
+            dones=torch.as_tensor(self.dones[indices], device=self.device),
+        )
         # ==================================================================
 
 
@@ -144,7 +159,11 @@ def compute_td_targets(target_network, batch: Batch, gamma: float) -> torch.Tens
 
     """
     # ===================== YOUR CODE HERE (Part 2) =====================
-    raise NotImplementedError("Implement compute_td_targets")
+    # Greedy value of the next state under the frozen target network.
+    next_q = target_network(batch.next_observations).max(dim=1).values
+    # dones carries terminations only, so truncated episodes keep bootstrapping.
+    # Flatten (B, 1) -> (B,): leaving them unflattened would broadcast to (B, B).
+    return batch.rewards.flatten() + gamma * next_q * (1.0 - batch.dones.flatten())
     # ===================================================================
 
 
