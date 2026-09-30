@@ -1,0 +1,30 @@
+# A2C no LunarLander-v3 (parte extra da atividade).
+# Mudanças em relação ao a2c_cartpole: mais passos, gamma 0.995 (o bônus do pouso
+# chega bem depois) e ent_coef 1e-3 (com 0.01 a política fica aleatória demais).
+#
+#   python train.py --config a2c_lunarlander
+
+algorithm: a2c
+env_id: LunarLander-v3
+seed: 1
+cuda: false
+total_timesteps: 4000000
+num_envs: 8
+
+track: true
+capture_video: true
+save_model: true
+checkpoint_every: 0
+
+agent:
+  activation: Tanh
+  hidden_layers_size: 64
+
+a2c:
+  learning_rate: 8.3e-4
+  num_steps: 5
+  gamma: 0.995
+  vf_coef: 0.5
+  ent_coef: 1.0e-3
+  max_grad_norm: 0.5
+  use_baseline: true
